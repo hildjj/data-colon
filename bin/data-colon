@@ -17,7 +17,7 @@ program
   .version(pkg.version)
   .option('-o, --output <file>', 'Output file name [stdout]')
   .option('-m, --mediatype <type>', 'MIME media type for encoding')
-  .arguments('[file...]')
+  .arguments('[fileOrURI...]')
   .parse(process.argv);
 
 var DATA = 'data:';
