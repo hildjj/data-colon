@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+
+var fs = require('fs');
+var dataUri = require('strong-data-uri');
+var mime = require('mime');
+var commander = require('commander');
+
+// decode: data-colon data:foo
+// encode: data-colon filename
+// decode: data-colon < filename-starting-with-data:
+// encode: data-colon < filename
+
+var pkg = require('../package');
+var program = new commander.Command();
+
+program
+  .version(pkg.version)
+  .option('-o, --output <file>', 'Output file name [stdout]')
+  .option('-m, --mediatype <type>', 'MIME media type for encoding')
+  .arguments('[file...]')
+  .parse(process.argv);
+
+var DATA = 'data:';
+var DATA_REGEX = /^data:/;
+var DATA_BUF = new Buffer(DATA);
+
+var OUTPUT = program.output ?
+  fs.createWriteStream(program.output) : process.stdout;
+
+var MEDIA = program.mediatype;
+
+function readStdin(cb) {
+  var input = [];
+  process.stdin.on('data', function(buf) {
+    input.push(buf);
+  });
+  process.stdin.on('end', function() {
+    cb(null, Buffer.concat(input));
+  });
+  process.stdin.on('error', function(err) {
+    cb(err);
+  });
+
+  process.stdin.resume();
+}
+
+function encode(err, buf) {
+  if (err != null) {
+    console.error('Error processing input: ' + err);
+    return;
+  }
+  OUTPUT.write(dataUri.encode(buf, MEDIA));
+  OUTPUT.write('\n');
+}
+
+function decode(err, buf) {
+  if (err != null) {
+    console.error('Error processing input: ' + err);
+    return;
+  }
+  var dat = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+  OUTPUT.write(dataUri.decode(dat));
+}
+
+function detect(err, buf) {
+  if (err !== null) {
+    console.error('Error processing input: ' + err);
+    return;
+  }
+  f = decode;
+  if (buf.length < 5) {
+    f = encode;
+  }
+  if (Buffer.isBuffer(buf)) {
+    if (!DATA_BUF.equals(buf.slice(0,DATA_BUF.length))) {
+      f = encode;
+    }
+  }
+  else if (!buf.match(DATA_REGEX)) {
+    f = encode;
+  }
+  f(err, buf);
+}
+
+if (program.args.length === 0) {
+  readStdin(detect);
+} else {
+  program.args.forEach(function (arg) {
+    if (arg.match(DATA_REGEX)) {
+      decode(null, arg);
+    } else {
+      if (arg === '-') {
+        readStdin(detect);
+      } else {
+        if (!MEDIA) {
+          MEDIA = mime.lookup(arg);
+        }
+        fs.readFile(arg, encode);
+      }
+    }
+  });
+}
