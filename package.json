@@ -19,7 +19,7 @@
     "command-line"
   ],
   "author": "Joe Hildebrand",
-  "license": "BSD",
+  "license": "BSD-2-Clause",
   "bugs": {
     "url": "https://github.com/hildjj/data-colon/issues"
   },
