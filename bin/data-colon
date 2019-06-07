@@ -1,102 +1,96 @@
 #!/usr/bin/env node
 
-var fs = require('fs');
-var dataUri = require('strong-data-uri');
-var mime = require('mime');
-var commander = require('commander');
+const fs = require('fs')
+const dataUri = require('strong-data-uri')
+const mime = require('mime')
+const commander = require('commander')
 
 // decode: data-colon data:foo
 // encode: data-colon filename
 // decode: data-colon < filename-starting-with-data:
 // encode: data-colon < filename
 
-var pkg = require('../package');
-var program = new commander.Command();
+const pkg = require('../package')
+const program = new commander.Command()
 
 program
   .version(pkg.version)
   .option('-o, --output <file>', 'Output file name [stdout]')
   .option('-m, --mediatype <type>', 'MIME media type for encoding')
   .arguments('[fileOrURI...]')
-  .parse(process.argv);
+  .parse(process.argv)
 
-var DATA = 'data:';
-var DATA_REGEX = /^data:/;
-var DATA_BUF = new Buffer(DATA);
+const DATA = 'data:'
+const DATA_REGEX = /^data:/
+const DATA_BUF = Buffer.from(DATA)
 
-var OUTPUT = program.output ?
-  fs.createWriteStream(program.output) : process.stdout;
+const OUTPUT = program.output
+  ? fs.createWriteStream(program.output) : process.stdout
 
-var MEDIA = program.mediatype;
+let MEDIA = program.mediatype
 
-function readStdin(cb) {
-  var input = [];
-  process.stdin.on('data', function(buf) {
-    input.push(buf);
-  });
-  process.stdin.on('end', function() {
-    cb(null, Buffer.concat(input));
-  });
-  process.stdin.on('error', function(err) {
-    cb(err);
-  });
+function readStdin (cb) {
+  const input = []
+  process.stdin.on('data', buf => input.push(buf))
+  process.stdin.on('end', () => cb(null, Buffer.concat(input)))
+  process.stdin.on('error', cb)
 
-  process.stdin.resume();
+  process.stdin.resume()
 }
 
-function encode(err, buf) {
+function encode (err, buf) {
   if (err != null) {
-    console.error('Error processing input: ' + err);
-    return;
+    console.error('Error processing input: ' + err)
+    return
   }
-  OUTPUT.write(dataUri.encode(buf, MEDIA));
-  OUTPUT.write('\n');
+  OUTPUT.write(dataUri.encode(buf, MEDIA))
+  OUTPUT.write('\n')
 }
 
-function decode(err, buf) {
+function decode (err, buf) {
   if (err != null) {
-    console.error('Error processing input: ' + err);
-    return;
+    console.error('Error processing input: ' + err)
+    return
   }
-  var dat = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
-  OUTPUT.write(dataUri.decode(dat));
+  let dat = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf
+  dat = dat.trim()
+  OUTPUT.write(dataUri.decode(dat))
 }
 
-function detect(err, buf) {
+function detect (err, buf) {
   if (err !== null) {
-    console.error('Error processing input: ' + err);
-    return;
+    console.error('Error processing input: ' + err)
+    return
   }
-  f = decode;
+  let f = decode
   if (buf.length < 5) {
-    f = encode;
+    f = encode
   }
   if (Buffer.isBuffer(buf)) {
-    if (!DATA_BUF.equals(buf.slice(0,DATA_BUF.length))) {
-      f = encode;
+    if (!DATA_BUF.equals(buf.slice(0, DATA_BUF.length))) {
+      f = encode
     }
+  } else if (!buf.match(DATA_REGEX)) {
+    f = encode
   }
-  else if (!buf.match(DATA_REGEX)) {
-    f = encode;
-  }
-  f(err, buf);
+  f(err, buf)
 }
 
 if (program.args.length === 0) {
-  readStdin(detect);
+  readStdin(detect)
 } else {
   program.args.forEach(function (arg) {
     if (arg.match(DATA_REGEX)) {
-      decode(null, arg);
+      decode(null, arg)
     } else {
       if (arg === '-') {
-        readStdin(detect);
+        readStdin(detect)
       } else {
         if (!MEDIA) {
-          MEDIA = mime.lookup(arg);
+          MEDIA = mime.getType(arg)
         }
-        fs.readFile(arg, encode);
+        fs.readFile(arg, encode)
       }
     }
-  });
+  })
 }
