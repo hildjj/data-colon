@@ -25,5 +25,5 @@ decode:
 
 encode:
 
-    data-colon data-colon image.jpg
+    data-colon image.jpg
     echo foo | data-colon -m text/plain
