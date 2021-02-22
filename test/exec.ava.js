@@ -18,7 +18,15 @@ async function withTempDir(f) {
   try {
     await f(dir)
   } finally {
-    await rmdir(dir, {recursive: true})
+    if (parseFloat(process.version.slice(1)) >= 12.10) {
+      // if you use a more-modern node, I won't leave files in /tmp.
+      // win-win.
+      await rmdir(dir, {recursive: true})
+    } else {
+      console.log(
+        `Clean up "${dir}" manually or upgrade node to 12.10 or higher.`
+      )
+    }
   }
 }
 
