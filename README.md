@@ -27,3 +27,5 @@ encode:
 
     data-colon image.jpg
     echo foo | data-colon -m text/plain
+
+[![Tests](https://github.com/hildjj/data-colon/actions/workflows/node.js.yml/badge.svg)](https://github.com/hildjj/data-colon/actions/workflows/node.js.yml) [![Coverage Status](https://coveralls.io/repos/github/hildjj/data-colon/badge.svg?branch=main)](https://coveralls.io/github/hildjj/data-colon?branch=main)
