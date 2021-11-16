@@ -5,7 +5,9 @@ const fs = require('fs')
 const dataUri = require('strong-data-uri')
 const mime = require('mime')
 const commander = require('commander')
+const {Buffer} = require('buffer')
 
+// Examples:
 // decode: data-colon data:foo
 // encode: data-colon filename
 // decode: data-colon < filename-starting-with-data:
@@ -48,7 +50,7 @@ function readStdin(cb) {
 }
 
 function encode(buf) {
-  // encode only throws on bad input types, which can't happen here.
+  // Encode only throws on bad input types, which can't happen here.
   OUTPUT.write(dataUri.encode(buf, media))
   OUTPUT.write('\n')
 }

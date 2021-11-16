@@ -7,6 +7,7 @@
   },
   "scripts": {
     "test": "ava",
+    "lint": "eslint . --ext js",
     "coverage": "nyc -r lcov npm test"
   },
   "repository": {
@@ -26,18 +27,19 @@
   },
   "homepage": "https://github.com/hildjj/data-colon",
   "dependencies": {
-    "commander": "^7.1.0",
-    "mime": "^2.5.2",
+    "commander": "^8.3.0",
+    "mime": "^3.0.0",
     "strong-data-uri": "^1.0.6"
   },
   "engines": {
-    "node": ">=10.18"
+    "node": ">=12.21"
   },
   "devDependencies": {
-    "@cto.af/eslint-config": "^0.0.3",
+    "@cto.af/eslint-config": "^0.0.12",
     "ava": "^3.15.0",
-    "eslint": "^7.20.0",
-    "eslint-plugin-ava": "^11.0.0",
+    "eslint": "^8.2.0",
+    "eslint-plugin-ava": "^13.1.0",
+    "eslint-plugin-jsdoc": "^37.0.3",
     "eslint-plugin-node": "^11.1.0",
     "nyc": "^15.1.0"
   }
