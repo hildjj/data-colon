@@ -6,6 +6,7 @@ const path = require('path')
 const util = require('util')
 const fs = require('fs')
 const os = require('os')
+const {Buffer} = require('buffer')
 
 const readFile = util.promisify(fs.readFile)
 const writeFile = util.promisify(fs.writeFile)
@@ -14,12 +15,12 @@ const rmdir = util.promisify(fs.rmdir)
 const pkg = require('../package.json')
 
 async function withTempDir(f) {
-  const dir = await mkdtemp(path.join(os.tmpdir(), pkg.name) + '-')
+  const dir = await mkdtemp(`${path.join(os.tmpdir(), pkg.name)}-`)
   try {
     await f(dir)
   } finally {
     if (parseFloat(process.version.slice(1)) >= 12.10) {
-      // if you use a more-modern node, I won't leave files in /tmp.
+      // If you use a more-modern node, I won't leave files in /tmp.
       // win-win.
       await rmdir(dir, {recursive: true})
     } else {
@@ -35,17 +36,17 @@ function exec(bin, opts = {}) {
     args: [],
     encoding: 'utf8',
     env: {},
-    ...opts
+    ...opts,
   }
   return new Promise((resolve, reject) => {
-    bin = path.join(__dirname, '..', 'bin', bin + '.js')
+    bin = path.join(__dirname, '..', 'bin', `${bin}.js`)
     const env = {
       ...process.env,
-      ...opts.env
+      ...opts.env,
     }
     const c = spawn(bin, opts.args, {
       stdio: 'pipe',
-      env
+      env,
     })
     c.on('error', reject)
     const bufs = []
@@ -54,13 +55,13 @@ function exec(bin, opts = {}) {
     c.on('close', code => {
       const buf = Buffer.concat(bufs)
       const str = buf.toString(opts.encoding)
-      if (code !== 0) {
+      if (code === 0) {
+        resolve(str)
+      } else {
         const err = new Error(`process fail, code ${code}`)
         err.buf = buf
         err.str = str
         reject(err)
-      } else {
-        resolve(str)
       }
     })
     c.on('exit', (code, signal) => {
@@ -78,7 +79,7 @@ function exec(bin, opts = {}) {
 
 test('help', async t => {
   const txt = await exec('data-colon', {
-    args: ['-h']
+    args: ['-h'],
   })
   t.is(txt, `\
 Usage: data-colon [options] [fileOrURI...]
@@ -92,24 +93,24 @@ Options:
 
 test('version', async t => {
   const txt = await exec('data-colon', {
-    args: ['-V']
+    args: ['-V'],
   })
-  t.is(txt, pkg.version + '\n')
+  t.is(txt, `${pkg.version}\n`)
 })
 
 test('decode', async t => {
   let txt = await exec('data-colon', {
-    args: ['data:text/plain;base64,aGVsbG8gd29ybGQ=']
+    args: ['data:text/plain;base64,aGVsbG8gd29ybGQ='],
   })
   t.is(txt, 'hello world')
   txt = await exec('data-colon', {
-    stdin: 'data:text/plain;base64,aGVsbG8gd29ybGQ='
+    stdin: 'data:text/plain;base64,aGVsbG8gd29ybGQ=',
   })
   t.is(txt, 'hello world')
 
   await t.throwsAsync(async() => {
     await exec('data-colon', {
-      args: ['data:text/plain,hello\nworld']
+      args: ['data:text/plain,hello\nworld'],
     })
   })
 })
@@ -117,7 +118,7 @@ test('decode', async t => {
 test('encode', async t => {
   const txt = await exec('data-colon', {
     args: ['-m', 'text/plain'],
-    stdin: 'hello world'
+    stdin: 'hello world',
   })
   t.is(txt, 'data:text/plain;base64,aGVsbG8gd29ybGQ=\n')
 })
@@ -128,10 +129,10 @@ test('round trip', async t => {
     const bar = path.join(dir, 'bar.json')
     await writeFile(foo, JSON.stringify({
       foo: 1,
-      bar: [true, null]
+      bar: [true, null],
     }, null, 2))
     let txt = await exec('data-colon', {
-      args: [foo]
+      args: [foo],
     })
     t.is(
       txt,
@@ -139,7 +140,7 @@ test('round trip', async t => {
       'ewogICJmb28iOiAxLAogICJiYXIiOiBbCiAgICB0cnVlLAogICAgbnVsbAogIF0KfQ==\n'
     )
     txt = await exec('data-colon', {
-      args: [foo, '-m', 'text/plain']
+      args: [foo, '-m', 'text/plain'],
     })
     t.is(
       txt,
@@ -148,11 +149,11 @@ test('round trip', async t => {
     )
     await t.throwsAsync(async() => {
       await exec('data-colon', {
-        args: [foo + '-DOES_NOT_EXIST']
+        args: [`${foo}-DOES_NOT_EXIST`],
       })
     })
     await exec('data-colon', {
-      args: [foo, '-o', bar]
+      args: [foo, '-o', bar],
     })
     t.is(
       await readFile(bar, 'utf8'),
@@ -160,15 +161,15 @@ test('round trip', async t => {
       'ewogICJmb28iOiAxLAogICJiYXIiOiBbCiAgICB0cnVlLAogICAgbnVsbAogIF0KfQ==\n'
     )
     await exec('data-colon', {
-      args: [bar, '-o', foo]
+      args: [bar, '-o', foo],
     })
     t.deepEqual(JSON.parse(await readFile(foo, 'utf8')), {
       foo: 1,
-      bar: [true, null]
+      bar: [true, null],
     })
     await writeFile(foo, '{}')
     t.is(await exec('data-colon', {
-      args: [foo]
+      args: [foo],
     }), 'data:application/json;base64,e30=\n')
   })
 })

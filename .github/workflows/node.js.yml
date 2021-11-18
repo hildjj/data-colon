@@ -6,7 +6,7 @@ on:
     branches:
       - '*'
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 14.x, 15.x]
+        node-version: [12.x, 14.x, 16.x, 17.x]
 
     steps:
       - uses: actions/checkout@v2
@@ -34,9 +34,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.node-version }}-
       - name: Install pnpm
-        uses: pnpm/action-setup@v1.2.1
+        uses: pnpm/action-setup@v2.0.1
         with:
-          version: 5.17.2
+          version: 6.22.2
           run_install: true
       - name: Test ${{ matrix.node-version }}
         run: npm run coverage
