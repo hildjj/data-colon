@@ -3,15 +3,10 @@
 const test = require('ava')
 const {spawn} = require('child_process')
 const path = require('path')
-const util = require('util')
-const fs = require('fs')
+const {readFile, writeFile, mkdtemp, rm} = require('fs').promises
 const os = require('os')
 const {Buffer} = require('buffer')
 
-const readFile = util.promisify(fs.readFile)
-const writeFile = util.promisify(fs.writeFile)
-const mkdtemp = util.promisify(fs.mkdtemp)
-const rmdir = util.promisify(fs.rmdir)
 const pkg = require('../package.json')
 
 async function withTempDir(f) {
@@ -22,8 +17,9 @@ async function withTempDir(f) {
     if (parseFloat(process.version.slice(1)) >= 12.10) {
       // If you use a more-modern node, I won't leave files in /tmp.
       // win-win.
-      await rmdir(dir, {recursive: true})
+      await rm(dir, {recursive: true})
     } else {
+      // eslint-disable-next-line no-console
       console.log(
         `Clean up "${dir}" manually or upgrade node to 12.10 or higher.`
       )
