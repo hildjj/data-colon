@@ -1,6 +1,6 @@
 {
   "name": "data-colon",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Encode and decode data: URIs on the command line using strong-data-uri",
   "bin": {
     "data-colon": "bin/data-colon.js"
