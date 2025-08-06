@@ -108,7 +108,7 @@ test('decode', async t => {
   });
   t.is(txt, 'hello world');
 
-  await t.throwsAsync(async() => {
+  await t.throwsAsync(async () => {
     await exec('data-colon', {
       args: ['data:text/plain,hello\nworld'],
     });
@@ -147,7 +147,7 @@ test('round trip', async t => {
       'data:text/plain;base64,' +
       'ewogICJmb28iOiAxLAogICJiYXIiOiBbCiAgICB0cnVlLAogICAgbnVsbAogIF0KfQ==\n'
     );
-    await t.throwsAsync(async() => {
+    await t.throwsAsync(async () => {
       await exec('data-colon', {
         args: [`${foo}-DOES_NOT_EXIST`],
       });
