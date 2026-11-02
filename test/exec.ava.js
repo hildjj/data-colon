@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 'use strict';
 
-const test = require('ava');
+const test = require('ava').default;
 const {spawn} = require('node:child_process');
 const path = require('node:path');
 const {readFile, writeFile, mkdtemp, rm} = require('node:fs').promises;
